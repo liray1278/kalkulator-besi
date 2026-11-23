@@ -1,0 +1,16 @@
+CARA PASANG "BERAT BESI" (repository BARU, jangan di hitung-material)
+
+1. Di GitHub: tombol + (kanan atas) -> New repository.
+   Nama: kalkulator-besi, pilih Public, Create repository.
+2. Klik "uploading an existing file", seret SEMUA file di folder ini
+   (boleh termasuk file .txt ini), lalu klik Commit changes.
+3. Settings -> Pages -> Branch: main, / (root) -> Save.
+4. Tunggu 1-2 menit. Alamatnya:
+   liray1278.github.io/kalkulator-besi
+5. Di iPhone: buka di Safari -> Share -> Add to Home Screen.
+
+Aplikasi ini butuh internet saat PERTAMA kali dibuka (untuk memuat
+tampilan dan ikon). Setelah itu bisa dipakai offline.
+
+KALAU MENGUBAH index.html: buka sw.js, ganti VERSI "v1" jadi "v2" (dst),
+lalu upload ulang index.html dan sw.js.

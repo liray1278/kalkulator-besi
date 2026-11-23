@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Berat Besi & Estimasi RAB Konstruksi Lengkap</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0c4a6e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="Berat Besi">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" href="icon-192.png">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts Inter & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Alpine.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        [x-cloak] { display: none !important; }
+        /* iPhone: cegah layar otomatis membesar saat mengetik di kolom isian */
+        @supports (-webkit-touch-callout: none) {
+            input, select, textarea { font-size: 16px !important; }
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-shadow { box-shadow: none !important; border: 1px solid #cbd5e1 !important; }
+            table { font-size: 10pt !important; }
+            .print-header { display: block !important; }
+            main { display: block !important; width: 100% !important; padding: 0 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between" x-data="steelApp()">
+
+    <!-- Header / Navbar -->
+    <header class="bg-brand-900 text-white shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-brand-600 p-3 rounded-2xl text-white shadow-inner">
+                    <i class="fa-solid fa-calculator text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Kalkulator Berat Besi & RAB Lengkap</h1>
+                    <p class="text-xs sm:text-sm text-sky-200">Database SNI / Komersial Terpadu & Hitung Custom Precision</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button @click="printReport()" class="bg-sky-600 hover:bg-sky-500 text-white px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow transition flex items-center gap-2">
+                    <i class="fa-solid fa-print"></i> Cetak Laporan RAB
+                </button>
+                <button @click="resetAllData()" class="bg-rose-600/90 hover:bg-rose-600 text-white px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow transition flex items-center gap-2" title="Kosongkan Semua Data">
+                    <i class="fa-solid fa-trash-can"></i> Reset
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Project Setup & Input Calculator (5 Cols on lg) -->
+        <div class="lg:col-span-5 space-y-6 no-print">
+            
+            <!-- Project Information Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2 uppercase tracking-wider text-brand-700">
+                    <i class="fa-solid fa-building"></i> Informasi Proyek & Estimator
+                </h2>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Proyek</label>
+                        <input type="text" x-model="project.name" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Contoh: Pembangunan Gudang Struktur Baja">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Lokasi Proyek</label>
+                        <input type="text" x-model="project.location" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Contoh: Kawasan Industri Cikande">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Estimator</label>
+                            <input type="text" x-model="project.estimator" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Nama Estimator">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal</label>
+                            <input type="date" x-model="project.date" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Material Input Form Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5">
+                <h2 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2 uppercase tracking-wider text-brand-700">
+                    <i class="fa-solid fa-cubes-stacked"></i> Input Data Material
+                </h2>
+                
+                <!-- Navigation Mode Toggle -->
+                <div class="flex bg-slate-100 p-1 rounded-xl mb-4 border border-slate-200">
+                    <button @click="inputMode = 'tabel'" :class="inputMode === 'tabel' ? 'bg-white shadow text-brand-700 font-bold' : 'text-slate-500 font-medium hover:text-slate-800'" class="flex-1 py-2 text-xs rounded-lg transition text-center">
+                        <i class="fa-solid fa-list-check mr-1"></i> Pilih dari Tabel Standar
+                    </button>
+                    <button @click="inputMode = 'manual'" :class="inputMode === 'manual' ? 'bg-white shadow text-brand-700 font-bold' : 'text-slate-500 font-medium hover:text-slate-800'" class="flex-1 py-2 text-xs rounded-lg transition text-center">
+                        <i class="fa-solid fa-calculator mr-1"></i> Hitung Rumus Custom
+                    </button>
+                </div>
+
+                <form @submit.prevent="addToBoq()" class="space-y-4">
+                    
+                    <!-- TAB 1: Pilih dari Tabel Database Standar -->
+                    <template x-if="inputMode === 'tabel'">
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Besi</label>
+                                <select x-model="form.category" @change="form.itemIndex = 0; filterQuery = ''" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white font-medium text-slate-800">
+                                    <template x-for="(label, key) in catLabels" :key="key">
+                                        <option :value="key" x-text="label + ' (' + (steelCatalogs[key] ? steelCatalogs[key].length : 0) + ' Ukuran)'"></option>
+                                    </template>
+                                </select>
+                            </div>
+
+                            <!-- Filter Search Dropdown -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="block text-xs font-semibold text-slate-600">Pilih Ukuran / Spesifikasi Presisi</label>
+                                    <span class="text-[10px] text-brand-600 font-bold" x-text="filteredCatalog.length + ' item tersedia'"></span>
+                                </div>
+                                <input type="text" x-model="filterQuery" placeholder="Cari ukuran (misal: 10mm, WF 200, Siku 50)..." class="w-full text-xs border border-slate-200 rounded-t-lg px-3 py-1.5 bg-slate-50 focus:outline-none border-b-0">
+                                <select x-model.number="form.itemIndex" class="w-full text-sm border border-slate-300 rounded-b-lg px-3 py-2.5 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white text-slate-800">
+                                    <template x-for="(item, idx) in filteredCatalog" :key="idx">
+                                        <option :value="item.originalIndex" x-text="item.nama + ' — [' + item.berat + ' kg]'"></option>
+                                    </template>
+                                </select>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- TAB 2: Kalkulator Rumus Manual Custom -->
+                    <template x-if="inputMode === 'manual'">
+                        <div class="space-y-3 bg-sky-50/70 p-3.5 rounded-xl border border-sky-100">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-700 mb-1">Tipe Material Manual</label>
+                                <select x-model="manualType" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white font-medium">
+                                    <option value="plat">Plat / Besi Lembaran Custom (PxLxT)</option>
+                                    <option value="beton">Besi Beton Silinder (d² x 0.006165 x L)</option>
+                                </select>
+                            </div>
+
+                            <!-- Form Plat Custom -->
+                            <template x-if="manualType === 'plat'">
+                                <div class="space-y-3">
+                                    <p class="text-[11px] text-sky-800 font-medium italic">
+                                        <i class="fa-solid fa-circle-info mr-1"></i> Rumus: (Tebal x Lebar x Panjang x 7.85) / 1.000.000
+                                    </p>
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Tebal (mm)</label>
+                                            <input type="number" step="0.1" min="0.1" x-model.number="manual.platTebal" class="w-full text-sm border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Lebar (mm)</label>
+                                            <input type="number" step="1" min="1" x-model.number="manual.platLebar" class="w-full text-sm border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Panjang (mm)</label>
+                                            <input type="number" step="1" min="1" x-model.number="manual.platPanjang" class="w-full text-sm border border-slate-300 rounded-lg px-2.5 py-1.5 bg-white">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Form Beton Custom -->
+                            <template x-if="manualType === 'beton'">
+                                <div class="space-y-3">
+                                    <p class="text-[11px] text-sky-800 font-medium italic">
+                                        <i class="fa-solid fa-circle-info mr-1"></i> Rumus Standard SNI: D² x 0.006165 x Panjang (m)
+                                    </p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1">Diameter D (mm)</label>
+                                            <input type="number" step="0.1" min="1" x-model.number="manual.betonDiameter" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 bg-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-xs font-semibold text-slate-600 mb-1">Panjang Batang (m)</label>
+                                            <input type="number" step="0.1" min="0.1" x-model.number="manual.betonPanjang" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-1.5 bg-white">
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </template>
+
+                    <!-- Common Metadata: Keterangan, Qty, Satuan -->
+                    <div class="grid grid-cols-12 gap-2">
+                        <div class="col-span-12">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan / Posisi Struktur (Opsional)</label>
+                            <input type="text" x-model="form.keterangan" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none" placeholder="Contoh: Kolom Utama Lt. 1 / Base Plate K-1">
+                        </div>
+                        <div class="col-span-7">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah / Qty Material</label>
+                            <input type="number" step="1" min="1" x-model.number="form.qty" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold">
+                        </div>
+                        <div class="col-span-5">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Satuan</label>
+                            <select x-model="form.satuan" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none bg-white font-medium">
+                                <option value="Lbr">Lbr (Lembar)</option>
+                                <option value="Btg">Btg (Batang)</option>
+                                <option value="Pcs">Pcs (Pieces)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Computed Unit Weight & Subtotal Preview -->
+                    <div class="grid grid-cols-2 gap-3 bg-slate-900 text-white p-3.5 rounded-xl">
+                        <div>
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Berat Satuan</span>
+                            <span class="text-base font-extrabold text-sky-400" x-text="calculatedUnitWeight.toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' kg'"></span>
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400">Subtotal Estimasi</span>
+                            <span class="text-base font-extrabold text-emerald-400" x-text="(calculatedUnitWeight * form.qty).toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' kg'"></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white px-4 py-3 rounded-xl text-sm font-bold shadow-md transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-plus-circle text-base"></i> Tambahkan ke Rekap RAB
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- Right Column: BoQ Rekapitulasi Table & Summary Cards (7 Cols on lg) -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <!-- Stat Summary Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 no-print">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3">
+                    <div class="bg-brand-50 text-brand-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-list-ol text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Total Item</p>
+                        <p class="text-lg font-extrabold text-slate-900" x-text="boqItems.length + ' Baris'"></p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3">
+                    <div class="bg-emerald-50 text-emerald-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-weight-scale text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Total Berat (Kg)</p>
+                        <p class="text-lg font-extrabold text-emerald-700" x-text="grandTotalWeight.toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' kg'"></p>
+                    </div>
+                </div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-3">
+                    <div class="bg-amber-50 text-amber-600 p-3 rounded-xl">
+                        <i class="fa-solid fa-truck-ramp-box text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">Total (Ton)</p>
+                        <p class="text-lg font-extrabold text-amber-700" x-text="(grandTotalWeight / 1000).toFixed(3) + ' Ton'"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BoQ Table Card -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print-shadow">
+                
+                <!-- Header Laporan RAB -->
+                <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/70">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="bg-brand-700 text-white text-[10px] px-2.5 py-0.5 rounded font-extrabold uppercase tracking-wider">Rekapitulasi Material Besi & RAB</span>
+                            <span class="text-xs text-slate-500 font-medium" x-text="'Tgl: ' + project.date"></span>
+                        </div>
+                        <h3 class="text-base sm:text-lg font-extrabold text-slate-900 mt-1" x-text="project.name || 'Proyek Konstruksi'"></h3>
+                        <p class="text-xs text-slate-600" x-text="'Lokasi: ' + (project.location || '-') + ' | Estimator: ' + (project.estimator || '-')"></p>
+                    </div>
+                    <div class="no-print flex items-center gap-2">
+                        <button @click="exportToCSV()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-file-excel text-emerald-600"></i> Ekspor Excel/CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Table Content -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 text-[11px] uppercase font-bold tracking-wider border-b border-slate-200">
+                                <th class="py-3 px-3 text-center w-10">No</th>
+                                <th class="py-3 px-3">Keterangan</th>
+                                <th class="py-3 px-3">Spesifikasi / Profil</th>
+                                <th class="py-3 px-3 text-center">Qty</th>
+                                <th class="py-3 px-3 text-right">Berat Sat. (kg)</th>
+                                <th class="py-3 px-3 text-right">Subtotal (kg)</th>
+                                <th class="py-3 px-3 text-center no-print w-20">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 text-xs">
+                            <template x-for="(item, index) in boqItems" :key="item.id">
+                                <tr class="hover:bg-slate-50/80 transition">
+                                    <td class="py-3 px-3 text-center text-slate-500 font-medium" x-text="index + 1"></td>
+                                    <td class="py-3 px-3 font-semibold text-slate-800" x-text="item.keterangan || '-'"></td>
+                                    <td class="py-3 px-3 text-slate-700 font-medium" x-text="item.spesifikasi"></td>
+                                    <td class="py-3 px-3 text-center font-bold text-slate-900" x-text="item.qty + ' ' + item.satuan"></td>
+                                    <td class="py-3 px-3 text-right text-slate-600 font-mono" x-text="item.beratSatuan.toLocaleString('id-ID', {maximumFractionDigits: 2})"></td>
+                                    <td class="py-3 px-3 text-right font-bold text-emerald-700 font-mono" x-text="item.subtotal.toLocaleString('id-ID', {maximumFractionDigits: 2})"></td>
+                                    <td class="py-3 px-3 text-center no-print">
+                                        <div class="flex items-center justify-center gap-1">
+                                            <button @click="openEditModal(item)" class="p-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition" title="Edit Baris">
+                                                <i class="fa-solid fa-pen text-xs"></i>
+                                            </button>
+                                            <button @click="deleteBoqItem(item.id)" class="p-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg transition" title="Hapus Baris">
+                                                <i class="fa-solid fa-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                            <template x-if="boqItems.length === 0">
+                                <tr>
+                                    <td colspan="7" class="py-10 text-center text-slate-400 italic">
+                                        <div class="flex flex-col items-center justify-center gap-2">
+                                            <i class="fa-solid fa-clipboard-list text-4xl text-slate-300"></i>
+                                            <span>Belum ada daftar material yang dimasukkan ke RAB.</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                        <tfoot>
+                            <tr class="bg-slate-50 font-bold border-t-2 border-slate-300 text-slate-900">
+                                <td colspan="5" class="py-3.5 px-3 text-right text-xs uppercase tracking-wider">Grand Total Berat Keseluruhan:</td>
+                                <td class="py-3.5 px-3 text-right text-emerald-700 font-mono text-sm font-extrabold" x-text="grandTotalWeight.toLocaleString('id-ID', {maximumFractionDigits: 2}) + ' kg'"></td>
+                                <td class="no-print"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Print Signature Footer Block -->
+                <div class="p-8 hidden print:grid grid-cols-2 gap-8 mt-12 text-center text-xs">
+                    <div>
+                        <p class="text-slate-600 mb-16 font-medium">Dibuat Oleh (Estimator),</p>
+                        <p class="font-bold border-b border-slate-400 pb-1 inline-block min-w-[180px]" x-text="project.estimator || 'Drafter / Estimator'"></p>
+                    </div>
+                    <div>
+                        <p class="text-slate-600 mb-16 font-medium">Disetujui Oleh (Project Manager),</p>
+                        <p class="font-bold border-b border-slate-400 pb-1 inline-block min-w-[180px]">Project Manager</p>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Edit Modal -->
+    <div x-show="editModalOpen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 no-print" x-cloak>
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4 border border-slate-100">
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+                <h3 class="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-amber-500"></i> Edit Baris RAB
+                </h3>
+                <button @click="editModalOpen = false" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Spesifikasi Material</label>
+                    <input type="text" disabled x-model="editingItem.spesifikasi" class="w-full text-xs bg-slate-100 border border-slate-300 rounded-lg px-3 py-2 text-slate-600 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Keterangan Posisi Struktur</label>
+                    <input type="text" x-model="editingItem.keterangan" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah (Qty)</label>
+                    <input type="number" min="1" x-model.number="editingItem.qty" class="w-full text-sm border border-slate-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-200">
+                <button @click="editModalOpen = false" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-4 py-2 rounded-xl text-xs font-bold transition">Batal</button>
+                <button @click="saveEditedItem()" class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Simpan Perubahan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500 no-print">
+        <p>&copy; 2026 Aplikasi Kalkulator Berat Besi & RAB Konstruksi. Database Komplit Standar SNI & Komersial.</p>
+    </footer>
+
+    <!-- Comprehensive JavaScript Logic & Full Dataset -->
+    <script>
+        // 100% Complete Steel Catalog Database
+        const steelCatalogs = {
+            "plat_hitam": [
+                {"nama": "Plat Hitam 1.2 mm (4' x 8')", "berat": 28.0},
+                {"nama": "Plat Hitam 1.4 mm (4' x 8')", "berat": 33.0},
+                {"nama": "Plat Hitam 1.5 mm (4' x 8')", "berat": 35.0},
+                {"nama": "Plat Hitam 1.6 mm (4' x 8')", "berat": 37.5},
+                {"nama": "Plat Hitam 1.8 mm (4' x 8')", "berat": 42.0},
+                {"nama": "Plat Hitam 2 mm (4' x 8')", "berat": 46.7},
+                {"nama": "Plat Hitam 2.3 mm (4' x 8')", "berat": 54.0},
+                {"nama": "Plat Hitam 2.6 mm (4' x 8')", "berat": 61.0},
+                {"nama": "Plat Hitam 2.8 mm (4' x 8')", "berat": 65.5},
+                {"nama": "Plat Hitam 3 mm (4' x 8')", "berat": 70.0},
+                {"nama": "Plat Hitam 3.2 mm (4' x 8')", "berat": 75.0},
+                {"nama": "Plat Hitam 4 mm (4' x 8')", "berat": 93.5},
+                {"nama": "Plat Hitam 4.5 mm (4' x 8')", "berat": 105.0},
+                {"nama": "Plat Hitam 5 mm (4' x 8')", "berat": 117.0},
+                {"nama": "Plat Hitam 6 mm (4' x 8')", "berat": 140.0},
+                {"nama": "Plat Hitam 8 mm (4' x 8')", "berat": 187.0},
+                {"nama": "Plat Hitam 9 mm (4' x 8')", "berat": 210.0},
+                {"nama": "Plat Hitam 10 mm (4' x 8')", "berat": 233.3},
+                {"nama": "Plat Hitam 12 mm (4' x 8')", "berat": 280.0},
+                {"nama": "Plat Hitam 15 mm (4' x 8')", "berat": 350.0},
+                {"nama": "Plat Hitam 16 mm (4' x 8')", "berat": 373.0},
+                {"nama": "Plat Hitam 19 mm (4' x 8')", "berat": 443.0},
+                {"nama": "Plat Hitam 22 mm (4' x 8')", "berat": 513.0},
+                {"nama": "Plat Hitam 25 mm (4' x 8')", "berat": 583.0},
+                {"nama": "Plat Hitam 28 mm (4' x 8')", "berat": 653.5},
+                {"nama": "Plat Hitam 30 mm (4' x 8')", "berat": 700.0},
+                {"nama": "Plat Hitam 32 mm (4' x 8')", "berat": 747.0},
+                {"nama": "Plat Hitam 38 mm (4' x 8')", "berat": 887.0},
+                {"nama": "Plat Hitam 45 mm (4' x 8')", "berat": 1050.0},
+                {"nama": "Plat Hitam 50 mm (4' x 8')", "berat": 1167.0},
+                {"nama": "Plat Hitam 65 mm (4' x 8')", "berat": 1517.0},
+                {"nama": "Plat Hitam 75 mm (4' x 8')", "berat": 1750.0},
+                {"nama": "Plat Hitam 100 mm (4' x 8')", "berat": 2333.0}
+            ],
+            "plat_putih": [
+                {"nama": "Plat Putih 0.5 mm (3' x 6')", "berat": 6.57},
+                {"nama": "Plat Putih 0.6 mm (3' x 6')", "berat": 7.88},
+                {"nama": "Plat Putih 0.65 mm (3' x 6')", "berat": 8.53},
+                {"nama": "Plat Putih 0.7 mm (3' x 6')", "berat": 9.20},
+                {"nama": "Plat Putih 0.8 mm (3' x 6')", "berat": 10.50},
+                {"nama": "Plat Putih 0.9 mm (3' x 6')", "berat": 11.82},
+                {"nama": "Plat Putih 1 mm (3' x 6')", "berat": 13.13},
+                {"nama": "Plat Putih 1.2 mm (3' x 6')", "berat": 15.80},
+                {"nama": "Plat Putih 1.4 mm (3' x 6')", "berat": 18.38},
+                {"nama": "Plat Putih 1.5 mm (3' x 6')", "berat": 19.70}
+            ],
+            "bordes": [
+                {"nama": "Plat Bordes 2.3 mm (3' x 6')", "berat": 59.0},
+                {"nama": "Plat Bordes 3 mm (3' x 6')", "berat": 75.0},
+                {"nama": "Plat Bordes 3.2 mm (3' x 6')", "berat": 79.6},
+                {"nama": "Plat Bordes 4 mm (3' x 6')", "berat": 98.5},
+                {"nama": "Plat Bordes 4.5 mm (3' x 6')", "berat": 110.0},
+                {"nama": "Plat Bordes 5 mm (3' x 6')", "berat": 122.0},
+                {"nama": "Plat Bordes 6 mm (3' x 6')", "berat": 145.0},
+                {"nama": "Plat Bordes 8 mm (3' x 6')", "berat": 192.0},
+                {"nama": "Plat Bordes 9 mm (3' x 6')", "berat": 215.0}
+            ],
+            "wf": [
+                {"nama": "WF 100x50x5x7 mm (12m)", "berat": 112.0},
+                {"nama": "WF 125x60x6x8 mm (12m)", "berat": 158.4},
+                {"nama": "WF 148x100x6x9 mm (12m)", "berat": 253.2},
+                {"nama": "WF 150x75x5x7 mm (12m)", "berat": 168.0},
+                {"nama": "WF 175x90x5x8 mm (12m)", "berat": 217.2},
+                {"nama": "WF 198x99x4.5x7 mm (12m)", "berat": 218.4},
+                {"nama": "WF 200x100x5.5x8 mm (12m)", "berat": 256.0},
+                {"nama": "WF 248x124x5x8 mm (12m)", "berat": 308.4},
+                {"nama": "WF 250x125x6x9 mm (12m)", "berat": 355.2},
+                {"nama": "WF 298x149x5.5x8 mm (12m)", "berat": 384.0},
+                {"nama": "WF 300x150x6.5x9 mm (12m)", "berat": 440.4},
+                {"nama": "WF 346x174x6x9 mm (12m)", "berat": 496.8},
+                {"nama": "WF 350x175x7x11 mm (12m)", "berat": 595.2},
+                {"nama": "WF 396x199x7x11 mm (12m)", "berat": 679.2},
+                {"nama": "WF 400x200x8x13 mm (12m)", "berat": 792.0},
+                {"nama": "WF 450x200x9x14 mm (12m)", "berat": 912.0},
+                {"nama": "WF 500x200x10x16 mm (12m)", "berat": 1075.2},
+                {"nama": "WF 588x300x12x20 mm (12m)", "berat": 1812.0},
+                {"nama": "WF 600x200x11x17 mm (12m)", "berat": 1272.0},
+                {"nama": "WF 700x300x13x24 mm (12m)", "berat": 2220.0},
+                {"nama": "WF 800x300x14x26 mm (12m)", "berat": 2520.0},
+                {"nama": "WF 900x300x16x28 mm (12m)", "berat": 2916.0},
+                {"nama": "WF 1000x300x16x32 mm (12m)", "berat": 3396.0}
+            ],
+            "canal_u": [
+                {"nama": "UNP 50x38x5 mm (6m)", "berat": 31.0},
+                {"nama": "UNP 65x42x5.5 mm (6m)", "berat": 42.0},
+                {"nama": "UNP 75x40x5 mm (6m)", "berat": 41.5},
+                {"nama": "UNP 80x45x6 mm (6m)", "berat": 49.0},
+                {"nama": "UNP 100x50x5 mm (6m)", "berat": 56.2},
+                {"nama": "UNP 120x55x7 mm (6m)", "berat": 80.4},
+                {"nama": "UNP 140x60x7 mm (6m)", "berat": 96.0},
+                {"nama": "UNP 150x75x6.5 mm (6m)", "berat": 112.0},
+                {"nama": "UNP 160x65x7.5 mm (6m)", "berat": 112.8},
+                {"nama": "UNP 180x75x7 mm (6m)", "berat": 132.0},
+                {"nama": "UNP 200x80x7.5 mm (6m)", "berat": 151.8},
+                {"nama": "UNP 200x90x8 mm (12m)", "berat": 363.6},
+                {"nama": "UNP 220x80x9 mm (6m)", "berat": 176.4},
+                {"nama": "UNP 240x85x9.5 mm (6m)", "berat": 199.2},
+                {"nama": "UNP 250x90x9 mm (12m)", "berat": 415.2},
+                {"nama": "UNP 260x90x10 mm (12m)", "berat": 454.8},
+                {"nama": "UNP 280x95x10 mm (12m)", "berat": 501.6},
+                {"nama": "UNP 300x90x9 mm (12m)", "berat": 457.2},
+                {"nama": "UNP 300x100x10 mm (12m)", "berat": 554.4},
+                {"nama": "UNP 320x100x14 mm (12m)", "berat": 714.0},
+                {"nama": "UNP 350x100x14 mm (12m)", "berat": 757.2},
+                {"nama": "UNP 380x102x16 mm (12m)", "berat": 846.0},
+                {"nama": "UNP 400x110x14 mm (12m)", "berat": 861.6},
+                {"nama": "UNP 50 Standar (6m)", "berat": 31.0},
+                {"nama": "UNP 80 Standar (6m)", "berat": 49.0},
+                {"nama": "UNP 100 Standar (6m)", "berat": 56.2},
+                {"nama": "UNP 120 Standar (6m)", "berat": 75.0}
+            ],
+            "canal_c": [
+                {"nama": "CNP 60x30x10x1.6 mm (6m)", "berat": 9.8},
+                {"nama": "CNP 75x35x15x1.6 mm (6m)", "berat": 12.5},
+                {"nama": "CNP 75x45x15x1.6 mm (6m)", "berat": 13.9},
+                {"nama": "CNP 75x45x15x2.3 mm (6m)", "berat": 19.5},
+                {"nama": "CNP 100x50x20x1.6 mm (6m)", "berat": 17.5},
+                {"nama": "CNP 100x50x20x2.0 mm (6m)", "berat": 21.4},
+                {"nama": "CNP 100x50x20x2.3 mm (6m)", "berat": 24.3},
+                {"nama": "CNP 100x50x20x3.2 mm (6m)", "berat": 33.0},
+                {"nama": "CNP 125x50x20x1.6 mm (6m)", "berat": 19.5},
+                {"nama": "CNP 125x50x20x2.0 mm (6m)", "berat": 23.7},
+                {"nama": "CNP 125x50x20x2.3 mm (6m)", "berat": 27.1},
+                {"nama": "CNP 125x50x20x3.2 mm (6m)", "berat": 36.8},
+                {"nama": "CNP 150x50x20x1.6 mm (6m)", "berat": 21.5},
+                {"nama": "CNP 150x50x20x2.0 mm (6m)", "berat": 26.1},
+                {"nama": "CNP 150x50x20x2.3 mm (6m)", "berat": 29.8},
+                {"nama": "CNP 150x50x20x3.2 mm (6m)", "berat": 40.6},
+                {"nama": "CNP 150x65x20x2.3 mm (6m)", "berat": 32.8},
+                {"nama": "CNP 150x65x20x3.2 mm (6m)", "berat": 44.8},
+                {"nama": "CNP 200x75x20x2.0 mm (6m)", "berat": 35.2},
+                {"nama": "CNP 200x75x20x2.3 mm (6m)", "berat": 40.2},
+                {"nama": "CNP 200x75x20x3.2 mm (6m)", "berat": 55.62}
+            ],
+            "siku": [
+                {"nama": "Siku 25x25x3 mm (6m)", "berat": 6.72},
+                {"nama": "Siku 30x30x3 mm (6m)", "berat": 8.16},
+                {"nama": "Siku 40x40x3 mm (6m)", "berat": 11.0},
+                {"nama": "Siku 40x40x4 mm (6m)", "berat": 14.5},
+                {"nama": "Siku 45x45x4 mm (6m)", "berat": 16.5},
+                {"nama": "Siku 50x50x4 mm (6m)", "berat": 18.4},
+                {"nama": "Siku 50x50x5 mm (6m)", "berat": 22.6},
+                {"nama": "Siku 60x60x5 mm (6m)", "berat": 27.5},
+                {"nama": "Siku 60x60x6 mm (6m)", "berat": 32.52},
+                {"nama": "Siku 65x65x6 mm (6m)", "berat": 35.4},
+                {"nama": "Siku 70x70x6 mm (6m)", "berat": 38.3},
+                {"nama": "Siku 70x70x7 mm (6m)", "berat": 44.3},
+                {"nama": "Siku 75x75x6 mm (6m)", "berat": 41.2},
+                {"nama": "Siku 75x75x7 mm (6m)", "berat": 47.7},
+                {"nama": "Siku 75x75x8 mm (6m)", "berat": 54.18},
+                {"nama": "Siku 80x80x8 mm (6m)", "berat": 57.9},
+                {"nama": "Siku 90x90x9 mm (6m)", "berat": 74.2},
+                {"nama": "Siku 100x100x8 mm (6m)", "berat": 73.2},
+                {"nama": "Siku 100x100x10 mm (6m)", "berat": 90.6},
+                {"nama": "Siku 120x120x10 mm (6m)", "berat": 110.0},
+                {"nama": "Siku 120x120x12 mm (6m)", "berat": 130.0},
+                {"nama": "Siku 130x130x12 mm (6m)", "berat": 142.0},
+                {"nama": "Siku 150x150x12 mm (6m)", "berat": 164.0},
+                {"nama": "Siku 150x150x15 mm (6m)", "berat": 202.0},
+                {"nama": "Siku 200x200x15 mm (12m)", "berat": 544.0},
+                {"nama": "Siku 200x200x20 mm (12m)", "berat": 716.0}
+            ],
+            "beton": [
+                {"nama": "Besi Beton Ulir D 10 mm (12m)", "berat": 7.40},
+                {"nama": "Besi Beton Ulir D 13 mm (12m)", "berat": 12.50},
+                {"nama": "Besi Beton Ulir D 16 mm (12m)", "berat": 19.00},
+                {"nama": "Besi Beton Ulir D 19 mm (12m)", "berat": 26.80},
+                {"nama": "Besi Beton Ulir D 22 mm (12m)", "berat": 35.80},
+                {"nama": "Besi Beton Ulir D 25 mm (12m)", "berat": 46.20},
+                {"nama": "Besi Beton Ulir D 29 mm (12m)", "berat": 62.20},
+                {"nama": "Besi Beton Ulir D 32 mm (12m)", "berat": 75.80},
+                {"nama": "Besi Beton Ulir D 36 mm (12m)", "berat": 95.88}
+            ]
+        };
+
+        const catLabels = {
+            "plat_hitam": "Plat Hitam",
+            "plat_putih": "Plat Putih",
+            "bordes": "Plat Bordes",
+            "wf": "Besi WF / Wide Flange",
+            "canal_u": "Canal U / UNP",
+            "canal_c": "Canal C / CNP",
+            "siku": "Besi Siku / Angle Bars",
+            "beton": "Besi Beton Ulir / Deformed Bar"
+        };
+
+        function steelApp() {
+            return {
+                project: {
+                    name: 'PT',
+                    location: 'Jalan',
+                    estimator: 'Tim Civil & Structural Engineering',
+                    date: new Date().toISOString().split('T')[0]
+                },
+                
+                inputMode: 'tabel', // 'tabel' | 'manual'
+                manualType: 'plat', // 'plat' | 'beton'
+                filterQuery: '',
+                
+                catLabels: catLabels,
+                steelCatalogs: steelCatalogs,
+                
+                form: {
+                    category: 'plat_hitam',
+                    itemIndex: 0,
+                    keterangan: '',
+                    qty: 1,
+                    satuan: 'Lbr'
+                },
+
+                manual: {
+                    platTebal: 10,
+                    platLebar: 1200,
+                    platPanjang: 2400,
+                    betonDiameter: 13,
+                    betonPanjang: 12
+                },
+                
+                boqItems: [],
+                
+                editModalOpen: false,
+                editingItem: { id: null, spesifikasi: '', qty: 1, keterangan: '' },
+
+                init() {
+                    const saved = localStorage.getItem('construct_steel_boq_v3');
+                    if (saved) {
+                        try { this.boqItems = JSON.parse(saved); } catch(e) {}
+                    }
+                    const savedProj = localStorage.getItem('construct_steel_proj_v3');
+                    if (savedProj) {
+                        try { this.project = JSON.parse(savedProj); } catch(e) {}
+                    }
+                    
+                    this.$watch('boqItems', val => localStorage.setItem('construct_steel_boq_v3', JSON.stringify(val)));
+                    this.$watch('project', val => localStorage.setItem('construct_steel_proj_v3', JSON.stringify(val)), {deep: true});
+                    // Saat mencari ukuran, otomatis pilih hasil pertama supaya yang ditambahkan = yang terlihat
+                    this.$watch('filterQuery', () => {
+                        const f = this.filteredCatalog;
+                        if (f.length && !f.some(i => i.originalIndex === this.form.itemIndex)) {
+                            this.form.itemIndex = f[0].originalIndex;
+                        }
+                    });
+                },
+
+                get currentCatalog() {
+                    return steelCatalogs[this.form.category] || [];
+                },
+
+                get filteredCatalog() {
+                    const cat = this.currentCatalog;
+                    if (!this.filterQuery || this.filterQuery.trim() === '') {
+                        return cat.map((item, idx) => ({ ...item, originalIndex: idx }));
+                    }
+                    const q = this.filterQuery.toLowerCase();
+                    return cat
+                        .map((item, idx) => ({ ...item, originalIndex: idx }))
+                        .filter(item => item.nama.toLowerCase().includes(q));
+                },
+
+                get calculatedUnitWeight() {
+                    if (this.inputMode === 'tabel') {
+                        if (this.currentCatalog.length > 0 && this.currentCatalog[this.form.itemIndex]) {
+                            return this.currentCatalog[this.form.itemIndex].berat;
+                        }
+                        return 0;
+                    } else {
+                        if (this.manualType === 'plat') {
+                            // (Tebal x Lebar x Panjang x 7.85) / 1.000.000
+                            let t = parseFloat(this.manual.platTebal) || 0;
+                            let l = parseFloat(this.manual.platLebar) || 0;
+                            let p = parseFloat(this.manual.platPanjang) || 0;
+                            return (t * l * p * 7.85) / 1000000;
+                        } else {
+                            // D^2 x 0.006165 x Panjang
+                            let d = parseFloat(this.manual.betonDiameter) || 0;
+                            let p = parseFloat(this.manual.betonPanjang) || 0;
+                            return (d * d * 0.006165) * p;
+                        }
+                    }
+                },
+
+                addToBoq() {
+                    let spec = '';
+                    let unitW = this.calculatedUnitWeight;
+                    
+                    if (this.inputMode === 'tabel') {
+                        let item = this.currentCatalog[this.form.itemIndex];
+                        if (!item) return;
+                        spec = item.nama;
+                    } else {
+                        if (this.manualType === 'plat') {
+                            spec = `Custom Plat ${this.manual.platTebal}mm x ${this.manual.platLebar}mm x ${this.manual.platPanjang}mm`;
+                        } else {
+                            spec = `Custom Beton D${this.manual.betonDiameter}mm - Panjang ${this.manual.betonPanjang}m`;
+                        }
+                    }
+
+                    const newItem = {
+                        id: Date.now() + Math.random(),
+                        keterangan: this.form.keterangan,
+                        spesifikasi: spec,
+                        qty: parseInt(this.form.qty) || 1,
+                        satuan: this.form.satuan,
+                        beratSatuan: unitW,
+                        subtotal: unitW * (parseInt(this.form.qty) || 1)
+                    };
+
+                    this.boqItems.push(newItem);
+                    
+                    // Reset field umum setelah penambahan
+                    this.form.keterangan = ''; 
+                    this.form.qty = 1;
+                },
+
+                get grandTotalWeight() {
+                    return this.boqItems.reduce((sum, item) => sum + item.subtotal, 0);
+                },
+
+                deleteBoqItem(id) {
+                    if (confirm('Apakah Anda yakin ingin menghapus material ini dari rekapitulasi?')) {
+                        this.boqItems = this.boqItems.filter(i => i.id !== id);
+                    }
+                },
+
+                openEditModal(item) {
+                    this.editingItem = { ...item };
+                    this.editModalOpen = true;
+                },
+
+                saveEditedItem() {
+                    const idx = this.boqItems.findIndex(i => i.id === this.editingItem.id);
+                    if (idx !== -1) {
+                        this.boqItems[idx].qty = parseInt(this.editingItem.qty) || 1;
+                        this.boqItems[idx].keterangan = this.editingItem.keterangan;
+                        this.boqItems[idx].subtotal = this.boqItems[idx].beratSatuan * (parseInt(this.editingItem.qty) || 1);
+                    }
+                    this.editModalOpen = false;
+                },
+
+                resetAllData() {
+                    if (confirm('PERINGATAN: Semua daftar rekapitulasi RAB akan dikosongkan. Lanjutkan?')) {
+                        this.boqItems = [];
+                        localStorage.removeItem('construct_steel_boq_v3');
+                    }
+                },
+
+                printReport() {
+                    window.print();
+                },
+
+                exportToCSV() {
+                    if (this.boqItems.length === 0) {
+                        alert('Tidak ada data RAB untuk diekspor!');
+                        return;
+                    }
+                    let csvContent = "";
+                    csvContent += "No,Keterangan,Spesifikasi/Profil,Qty,Satuan,Berat Satuan (kg),Subtotal Berat (kg)\r\n";
+                    
+                    this.boqItems.forEach((item, index) => {
+                        let row = [
+                            index + 1,
+                            `"${item.keterangan || ''}"`,
+                            `"${item.spesifikasi}"`,
+                            item.qty,
+                            `"${item.satuan}"`,
+                            item.beratSatuan.toFixed(2),
+                            item.subtotal.toFixed(2)
+                        ];
+                        csvContent += row.join(",") + "\r\n";
+                    });
+
+                    csvContent += `,,,,,TOTAL BERAT (KG),${this.grandTotalWeight.toFixed(2)}\r\n`;
+                    csvContent += `,,,,,TOTAL BERAT (TON),${(this.grandTotalWeight / 1000).toFixed(3)}\r\n`;
+
+                    // ﻿ supaya Excel membaca huruf dengan benar
+                    const blob = new Blob(["﻿" + csvContent], { type: "text/csv;charset=utf-8" });
+                    const fname = `Rekap_RAB_Berat_Besi_${(this.project.name || 'Proyek').replace(/[^\w\-]+/g, '_')}.csv`;
+                    const download = () => {
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = fname;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        setTimeout(() => URL.revokeObjectURL(url), 4000);
+                    };
+                    // iPhone/iPad: pakai menu Share (Simpan ke Files / WhatsApp / Email)
+                    const isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                    const file = new File([blob], fname, { type: "text/csv" });
+                    if (isIOS && navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({ files: [file], title: fname }).catch(err => { if (err && err.name !== 'AbortError') download(); });
+                    } else {
+                        download();
+                    }
+                }
+            }
+        }
+    </script>
+    <script>
+        if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        }
+    </script>
+</body>
+</html>
